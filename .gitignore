@@ -29,10 +29,8 @@ node_modules/
 .yo-rc.json
 
 # Build-related directories
-dist/
 dist-test/
 docs/api/
-es5/
 tmp
 test/test-manifests.js
 test/test-expected.js
