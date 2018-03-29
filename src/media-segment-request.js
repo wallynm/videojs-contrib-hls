@@ -269,18 +269,6 @@ const decryptSegment = (decrypter, segment, doneFn) => {
 };
 
 /**
- * The purpose of this function is to get the most pertinent error from the
- * array of errors.
- * For instance if a timeout and two aborts occur, then the aborts were
- * likely triggered by the timeout so return that error object.
- */
-const getMostImportantError = (errors) => {
-  return errors.reduce((prev, err) => {
-    return err.code > prev.code ? err : prev;
-  });
-};
-
-/**
  * This function waits for all XHRs to finish (with either success or failure)
  * before continueing processing via it's callback. The function gathers errors
  * from each request into a single errors array so that the error status for
@@ -292,26 +280,20 @@ const getMostImportantError = (errors) => {
  *                            downloaded and any decryption completed
  */
 const waitForCompletion = (activeXhrs, decrypter, doneFn) => {
-  let errors = [];
   let count = 0;
 
   return (error, segment) => {
     if (error) {
-      // If there are errors, we have to abort any outstanding requests
       abortAll(activeXhrs);
-      errors.push(error);
+      return doneFn(error, segment);
     }
+
     count += 1;
 
     if (count === activeXhrs.length) {
       // Keep track of when *all* of the requests have completed
       segment.endOfAllRequests = Date.now();
 
-      if (errors.length > 0) {
-        const worstError = getMostImportantError(errors);
-
-        return doneFn(worstError, segment);
-      }
       if (segment.encryptedBytes) {
         return decryptSegment(decrypter, segment, doneFn);
       }
